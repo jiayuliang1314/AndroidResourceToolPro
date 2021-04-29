@@ -1,0 +1,45 @@
+apply plugin: 'com.android.application'
+
+//apply plugin: 'plugin.resTools'  // 资源重命名插件
+
+// 配置插件dsl
+//resConfig {
+//    new_prefix = 'better_'  // 资源前缀
+//    old_prefix = ''         // 老前缀，可为''空字符串
+//    // === below use default
+//    // resFolderPath 资源目录
+//    // srcFolderPath 源代码目录
+//    // manifestFilePath 清单文件目录
+//}
+
+android {
+    compileSdkVersion 29
+    buildToolsVersion "30.0.0"
+
+    defaultConfig {
+        applicationId "com.example.testplugin"
+        minSdkVersion 16
+        targetSdkVersion 29
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+
+}

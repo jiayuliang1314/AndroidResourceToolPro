@@ -1,0 +1,3 @@
+include ':myplugin'
+include ':app', ':ResTools'
+rootProject.name = "TestPlugin"
