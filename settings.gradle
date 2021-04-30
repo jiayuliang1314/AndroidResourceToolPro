@@ -1,3 +1,10 @@
 include ':myplugin'
 include ':app', ':ResTools'
-rootProject.name = "TestPlugin"
+rootProject.name = "AndroidResourceToolPro"
+gradle.ext {
+    // maven config
+    mavenUrl = "http://maven.test.release"
+    mavenDevUrl = "http://maven.test.snapshot"
+    mavenUserName = "deployer"
+    mavenPwd = "test"
+}

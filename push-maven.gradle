@@ -1,0 +1,62 @@
+apply plugin: 'maven'
+// publish 远程需要通过命令+参数： ./gradlew uploadArchives -Ptwl.publish
+// publish 远程需要通过命令+参数： ./gradlew :ResTools:uploadArchives -Ptwl.publish
+
+rootProject.ext.publishUrl = 'http://android3.weizhipin.com/nexus/content/repositories/releases/'
+rootProject.ext.publishUserName = 'admin'
+rootProject.ext.publishPassword = 'admin@kanzhun'
+rootProject.ext.publishGroupId = 'com.jyl.better.restools'
+
+def getRepositoryUrl() {
+    return hasProperty('twl.publish') ? rootProject.ext.publishUrl : uri("/Users/admin/StudioProjects/AndroidResourceToolPro/.local/")
+}
+
+static def getVersion() {
+    return '1.0.1' // lib_anti 版本号
+}
+
+afterEvaluate { project ->
+    uploadArchives {
+        print("begin uploadArchives")
+        repositories {
+            mavenDeployer {
+                repository(url: getRepositoryUrl()) {
+                    authentication(userName: rootProject.ext.publishUserName,
+                            password: rootProject.ext.publishPassword)
+                }
+
+                pom.groupId = rootProject.ext.publishGroupId
+                pom.artifactId = POM_ARTIFACT_ID
+                pom.version = getVersion()
+
+                pom.project {
+                    licenses {
+                        license {
+                            name 'The Apache Software License, Version 2.0'
+                            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        }
+                    }
+                }
+
+                pom.whenConfigured { pom ->
+                    pom.dependencies.findAll { dep -> dep.groupId == rootProject.name }.collect { dep ->
+                        dep.groupId = pom.groupId = rootProject.ext.publishGroupId
+                        dep.version = pom.version = getVersion()
+                    }
+                }
+            }
+        }
+    }
+
+//    task androidSourcesJar(type: Jar) {
+//        archiveClassifier.set('sources')
+//        //basename = artifact_id
+//        from android.sourceSets.main.java.sourceFiles
+//    }
+//
+//    artifacts {
+//        //archives packageReleaseJar
+//        archives androidSourcesJar
+////        archives androidJavadocsJar
+//    }
+}
