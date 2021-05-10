@@ -12,7 +12,7 @@ def getRepositoryUrl() {
 }
 
 static def getVersion() {
-    return '1.0.5' // lib_anti 版本号
+    return '1.0.6' // lib_anti 版本号
 }
 
 afterEvaluate { project ->

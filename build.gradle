@@ -14,7 +14,7 @@ buildscript {
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
         classpath 'com.jyl.better.restools:ResTools:1.0.1'
-        classpath 'com.jyl.better.restools:findunusedresources:1.0.5'
+        classpath 'com.jyl.better.restools:findunusedresources:1.0.6'
         classpath 'com.novoda:bintray-release:0.8.0'//添加
 
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"

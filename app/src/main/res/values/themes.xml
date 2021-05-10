@@ -1,16 +1,3 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-<!--    <style name="Theme.TestPlugin" parent="Theme.MaterialComponents.DayNight.DarkActionBar">-->
-<!--        &lt;!&ndash; Primary brand color. &ndash;&gt;-->
-<!--        <item name="colorPrimary">@color/better_better_better_better_purple_500</item>-->
-<!--        <item name="colorPrimaryVariant">@color/better_better_better_better_purple_700</item>-->
-<!--        <item name="colorOnPrimary">@color/better_better_better_better_white</item>-->
-<!--        &lt;!&ndash; Secondary brand color. &ndash;&gt;-->
-<!--        <item name="colorSecondary">@color/better_better_better_better_teal_200</item>-->
-<!--        <item name="colorSecondaryVariant">@color/better_better_better_better_teal_700</item>-->
-<!--        <item name="colorOnSecondary">@color/better_better_better_better_black</item>-->
-<!--        &lt;!&ndash; Status bar color. &ndash;&gt;-->
-<!--        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>-->
-<!--        &lt;!&ndash; Customize your theme here. &ndash;&gt;-->
-<!--    </style>-->
 </resources>

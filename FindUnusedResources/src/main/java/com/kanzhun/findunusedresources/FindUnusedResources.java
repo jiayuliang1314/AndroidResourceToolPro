@@ -625,7 +625,7 @@ public class FindUnusedResources{
             }
         } catch (Exception e) {
             System.out.println("searchFileForUse: Error reading file: " + file + ", " + e.getMessage());
-            e.printStackTrace();
+//            e.printStackTrace();
         } finally {
             if (br != null) {
                 try {
