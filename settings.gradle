@@ -1,5 +1,5 @@
 include ':myplugin'
-include ':app', ':ResTools'
+include ':app', ':ResTools', ':FindUnusedResources'
 rootProject.name = "AndroidResourceToolPro"
 gradle.ext {
     // maven config

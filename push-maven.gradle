@@ -1,7 +1,7 @@
 apply plugin: 'maven'
 // publish 远程需要通过命令+参数： ./gradlew uploadArchives -Ptwl.publish
 // publish 远程需要通过命令+参数： ./gradlew :ResTools:uploadArchives -Ptwl.publish
-
+//gradlew :ResTools:uploadArchives -Ptwl.publish
 rootProject.ext.publishUrl = 'http://android3.weizhipin.com/nexus/content/repositories/releases/'
 rootProject.ext.publishUserName = 'admin'
 rootProject.ext.publishPassword = 'admin@kanzhun'
@@ -12,7 +12,7 @@ def getRepositoryUrl() {
 }
 
 static def getVersion() {
-    return '1.0.1' // lib_anti 版本号
+    return '1.0.5' // lib_anti 版本号
 }
 
 afterEvaluate { project ->
