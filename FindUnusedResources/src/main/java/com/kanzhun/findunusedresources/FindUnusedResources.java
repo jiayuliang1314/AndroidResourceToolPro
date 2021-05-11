@@ -1,11 +1,19 @@
 package com.kanzhun.findunusedresources;
 
-import org.gradle.api.Plugin;
-import org.gradle.api.Project;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -15,33 +23,33 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Removes the following resources located in any <root>/res/drawable* directory:
  * - { .png, .xml }
  */
-public class FindUnusedResources{
+public class FindUnusedResources {
 
     private static final int ACTION_EXIT = 4;
     private static final int ACTION_PRINT_ALL = 3;
     private static final int ACTION_PRINT_UNUSED = 1;
     private static final int ACTION_DELETE = 2;
-    private static final String TMP_FIND_UNUSED_RESOURCES = "/tmp/FindUnusedResources/";
+    private static String TMP_FIND_UNUSED_RESOURCES = "/tmp/FindUnusedResources/";
     // each map below contains ALL indexed resources for that particular type (string/color/etc) and a reference count
-    private static Map<String, AtomicInteger> mStringMap = new TreeMap<>();
-    private static Map<String, AtomicInteger> mDimenMap = new TreeMap<>();
-    private static Map<String, AtomicInteger> mColorMap = new TreeMap<>();
-    private static Map<String, AtomicInteger> mStringArrayMap = new TreeMap<>();
-    private static Map<String, AtomicInteger> mDrawableMap = new TreeMap<>();
-    private static Map<String, AtomicInteger> mLayoutMap = new TreeMap<>();
-    private static Map<String, AtomicInteger> mStylesMap = new TreeMap<>();
-    private static List<String> deletedFileList = new ArrayList<>();
+    private static final Map<String, AtomicInteger> mStringMap = new TreeMap<>();
+    private static final Map<String, AtomicInteger> mDimenMap = new TreeMap<>();
+    private static final Map<String, AtomicInteger> mColorMap = new TreeMap<>();
+    private static final Map<String, AtomicInteger> mStringArrayMap = new TreeMap<>();
+    private static final Map<String, AtomicInteger> mDrawableMap = new TreeMap<>();
+    private static final Map<String, AtomicInteger> mLayoutMap = new TreeMap<>();
+    private static final Map<String, AtomicInteger> mStylesMap = new TreeMap<>();
+    private static final List<String> deletedFileList = new ArrayList<>();
     // what resources we're looking for..
-    private static String USE_STRING = "string";
-    private static String USE_DIMEN = "dimen";
-    private static String USE_COLOR = "color";
-    private static String USE_STRING_ARRAY = "string-array";
-    private static String USE_STRING_ARRAY_REFERENCE = "array"; // string-array referenced as R.array.xxx
-    private static String USE_DRAWABLE = "drawable";
-    private static String USE_LAYOUT = "layout";
-    private static String USE_STYLES = "style";
-    private static String[] EXCLUDE_FILES = {"analytics.xml"};
-    private static Map<String, Integer> mTotalRemovedMap = new HashMap<>();
+    private static final String USE_STRING = "string";
+    private static final String USE_DIMEN = "dimen";
+    private static final String USE_COLOR = "color";
+    private static final String USE_STRING_ARRAY = "string-array";
+    private static final String USE_STRING_ARRAY_REFERENCE = "array"; // string-array referenced as R.array.xxx
+    private static final String USE_DRAWABLE = "drawable";
+    private static final String USE_LAYOUT = "layout";
+    private static final String USE_STYLES = "style";
+    private static final String[] EXCLUDE_FILES = {"analytics.xml"};
+    private static final Map<String, Integer> mTotalRemovedMap = new HashMap<>();
 
     private static long mLastUpdateMs;
     private static String mRootPath;
@@ -63,6 +71,8 @@ public class FindUnusedResources{
             printUsage();
             System.exit(0);
         }
+
+        TMP_FIND_UNUSED_RESOURCES = root + TMP_FIND_UNUSED_RESOURCES;
 
         // get additional arguments
         List<String> additionalSearchPaths = new ArrayList<>();
