@@ -93,8 +93,8 @@ abstract class BaseFolderResReplace extends BaseReplace {
 
                     File newFile = new File(it.getParent(), newName)
                     if (newFile.exists()) {
-//                        newFile.delete()
-                        println("--------------- $resTypeName ${it.name} 重命名失败！，已存在：${newFile.name}")
+                        newFile.delete()
+                        println("--------------- $resTypeName ${it.name} 重命名，已存在：${newFile.name}")
                     }
 
                     if (!it.renameTo(newFile)) {
