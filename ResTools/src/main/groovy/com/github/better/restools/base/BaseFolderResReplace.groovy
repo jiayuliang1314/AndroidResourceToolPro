@@ -44,8 +44,8 @@ abstract class BaseFolderResReplace extends BaseReplace {
     final void replaceThis() throws IOException {
         println("***** $resTypeName ***** do $resTypeName start...")
 
-        def java_regx = ~getJavaRegex()
-        def xml_regx = ~getXmlRegex()
+        def java_regx = ~getJavaRegex() //todo ~ 表示正则对象 Pattern
+        def xml_regx = ~getXmlRegex()   //todo ~ 表示正则对象 Pattern
         Set<String> resNameSet = getResNameSet()
 
         // 1.源代码目录部分
@@ -73,7 +73,7 @@ abstract class BaseFolderResReplace extends BaseReplace {
         dirs?.each { dir ->
             dir?.eachFile { it ->
                 String fileName = it.name
-                if (it.name.lastIndexOf('.' ) > -1) {
+                if (it.name.lastIndexOf('.') > -1) {
                     // 可能是 png .9 图片
                     fileName = it.name.substring(0, it.name.lastIndexOf("."))
                     if (fileName.endsWith(".9")) {   // 可能有.9
@@ -85,13 +85,16 @@ abstract class BaseFolderResReplace extends BaseReplace {
                 if (resNameSet.contains(fileName)) {
                     String oldName = it.name
                     String newName = config.new_prefix + oldName
-                    if (oldName.startsWith(config.old_prefix)) {
-                        newName = config.new_prefix + oldName.substring(config.old_prefix.length())
+                    if (config.old_prefix != null && config.old_prefix.length() > 0) {
+                        if (oldName.startsWith(config.old_prefix)) {
+                            newName = config.new_prefix + oldName.substring(config.old_prefix.length())
+                        }
                     }
 
                     File newFile = new File(it.getParent(), newName)
                     if (newFile.exists()) {
-                        newFile.delete()
+//                        newFile.delete()
+                        println("--------------- $resTypeName ${it.name} 重命名失败！，已存在：${newFile.name}")
                     }
 
                     if (!it.renameTo(newFile)) {
