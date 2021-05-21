@@ -29,7 +29,7 @@ abstract class BaseReplace {
         this.manifestFile = new File(config.manifestFilePath)
     }
 
-    // ====== 源代码中的部分  start =============================================
+    //region ====== 源代码中的部分  start =============================================
     /**
      * 替换 src 源代码目录中的资源名
      * @param file 源代码目录
@@ -53,14 +53,18 @@ abstract class BaseReplace {
 
         String fileContent = file.getText(code_version)              // every file is a text file
         StringBuffer sb = new StringBuffer()             // result content
-        Matcher matcher = fileContent =~ regex
+        Matcher matcher = fileContent =~ regex          //=~ 正则表达式
         while (matcher.find()) {
-            String oldResName = matcher.group(6)   // the old res name
+            String oldResName = matcher.group(6)   // the old res name，group是针对（）来说的，group（0）就是指的整个串，group（1） 指的是第一个括号里的东西，group（2）指的第二个括号里的东西。
             if (set.contains(oldResName)) {               // 本模块中包含的资源名，才替换
                 String newResName = config.new_prefix + oldResName
                 if (oldResName.startsWith(config.old_prefix)) {     // 替换掉旧的前缀
                     newResName = config.new_prefix + oldResName.substring(config.old_prefix.length())
                 }
+//                appendReplacement（StringBuffer sb, String replaceMent）
+//                方法是将输入字符序列首次与正在表达式匹配的部分进行更改为replaceMent并且把结果添加到一个sb结果集中，
+//                对于匹配之前的字符序列，它们被转移到sb字符集中。
+//                https://blog.csdn.net/mjlfto/article/details/53896981
                 matcher.appendReplacement(sb, "\$1$newResName") // 拼接 保留$1分组,替换$6分组
             }
         }
@@ -70,9 +74,9 @@ abstract class BaseReplace {
             file.write(sb.toString(),code_version)           // 写回文件
         }
     }
-    // ====== 源代码中的部分  end =============================================
+    //endregion ====== 源代码中的部分  end =============================================
 
-    // ====== 资源文件部分公用方法  start =====================
+    //region ====== 资源文件部分公用方法  start =====================
     // def xml_regx = ~/(@XXX\/)(w+)"/      xxx 表示各种资源，如：layout、drawable 等
     /**
      * 操作资源
@@ -118,7 +122,6 @@ abstract class BaseReplace {
             file.write(sb.toString())
         }
     }
-    // ====== 资源文件部分公用方法  end =====================
 
     /**
      *  res目录下的资源 - 替换名称
@@ -145,4 +148,6 @@ abstract class BaseReplace {
             handleResFile(manifestFile, set, regx)
         }
     }
+    //endregion ====== 资源文件部分公用方法  end =====================
+
 }

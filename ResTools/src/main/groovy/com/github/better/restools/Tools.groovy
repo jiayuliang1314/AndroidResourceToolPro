@@ -35,7 +35,7 @@ class Tools {
     final static class FileNameSuffixFilter implements FileFilter {
         def suffix = ""
 
-        def FileNameSuffixFilter(suffix) {
+        FileNameSuffixFilter(suffix) {
             this.suffix = suffix
         }
 
