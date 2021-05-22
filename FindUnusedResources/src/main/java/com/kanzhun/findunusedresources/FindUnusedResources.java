@@ -315,7 +315,7 @@ public class FindUnusedResources {
                 boolean isMatch;
                 isMatch = searchLineForUse(isJava, line, mStringMap, USE_STRING);
                 if (!isMatch) {
-                    searchLineForUse(isJava, line, mDimenMap, USE_DIMEN);//todo？为啥没有isMatch
+                    isMatch = searchLineForUse(isJava, line, mDimenMap, USE_DIMEN);//todo？为啥没有isMatch
                 }
                 if (!isMatch) {
                     isMatch = searchLineForUse(isJava, line, mColorMap, USE_COLOR);
@@ -353,7 +353,7 @@ public class FindUnusedResources {
 
     private static boolean searchLineForUse(boolean isJava, String line, Map<String, AtomicInteger> map, String type) {
         String searchFor; // primary use case (ie: R.string.value)
-        String searchFor2 = null; // secondary use case (ie: R.id.value)，//todo 这里有问题
+//        String searchFor2 = null; // secondary use case (ie: R.id.value)，//todo 这里有问题
 
         boolean isFound = false;
 
@@ -367,17 +367,17 @@ public class FindUnusedResources {
                     convertedValue = value.replace('.', '_');
                 }
                 searchFor = "R." + type + "." + convertedValue; // R.string.value
-                searchFor2 = "R.id." + convertedValue; // R.id.value
+//                searchFor2 = "R.id." + convertedValue; // R.id.value
             } else {
                 // XML file
                 searchFor = "@" + type + "/" + value; // @string/value
-                searchFor2 = "@id/" + value; //  @id/value
+//                searchFor2 = "@id/" + value; //  @id/value
             }
 
             isFound = searchLineForUseWithKey(line, map, searchFor);
-            if (!isFound && searchFor2 != null) {
-                isFound = searchLineForUseWithKey(line, map, searchFor2);
-            }
+//            if (!isFound && searchFor2 != null) {
+//                isFound = searchLineForUseWithKey(line, map, searchFor2);
+//            }
 
             if (!isFound && !isJava && map == mStylesMap) {
                 // special case: styles can reference a parent 3 ways in XML file:
@@ -789,12 +789,12 @@ public class FindUnusedResources {
 
     /**
      * check if given key is in the line AND that the value associated is UNUSED
-     * todo 有没有可能有 R.string.abc  R.string.abcd
+     * key:     <string name="
      */
     private static boolean checkLineEntry(String line, Map<String, AtomicInteger> map, String key) {
         int pos = line.indexOf(key);
         if (pos >= 0) {
-            String value = line.substring(pos + key.length());//从首字母开始
+            String value = line.substring(pos + key.length());//返回从起始位置（beginIndex）至字符串末尾的字符串
             int p2 = value.indexOf("\"");
             if (p2 > 0) {
                 value = value.substring(0, p2);
