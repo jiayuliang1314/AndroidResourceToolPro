@@ -75,8 +75,8 @@ class FindUnusedResourcesPlugin implements Plugin<Project> {
                 File file = new File(resFolder)
                 String[] args = new String[4]
                 args[0] = file.getParentFile().getAbsolutePath()
-                args[1] = "1"
-                args[2] = "2"
+                args[1] = "1"//ACTION_PRINT_UNUSED
+                args[2] = "2"//ACTION_DELETE
                 args[3] = "noprompt"
                 println "++++++++++++++++++++++ Start FindUnusedResourcesPlugin.." + args[0]
                 FindUnusedResources.main(args)

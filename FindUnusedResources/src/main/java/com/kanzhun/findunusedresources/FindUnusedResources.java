@@ -24,12 +24,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * - { .png, .xml }
  */
 public class FindUnusedResources {
-
+    //region 参数
     private static final int ACTION_EXIT = 4;
     private static final int ACTION_PRINT_ALL = 3;
     private static final int ACTION_PRINT_UNUSED = 1;
     private static final int ACTION_DELETE = 2;
-    private static String TMP_FIND_UNUSED_RESOURCES = "/tmp/FindUnusedResources/";
     // each map below contains ALL indexed resources for that particular type (string/color/etc) and a reference count
     private static final Map<String, AtomicInteger> mStringMap = new TreeMap<>();
     private static final Map<String, AtomicInteger> mDimenMap = new TreeMap<>();
@@ -49,12 +48,22 @@ public class FindUnusedResources {
     private static final String USE_LAYOUT = "layout";
     private static final String USE_STYLES = "style";
     private static final String[] EXCLUDE_FILES = {"analytics.xml"};
-    private static final Map<String, Integer> mTotalRemovedMap = new HashMap<>();
-
-    private static long mLastUpdateMs;
-    private static String mRootPath;
+    private static final Map<String, Integer> mTotalRemovedMap = new HashMap<>();//todo 干哈的，看着没用到
+    private static String TMP_FIND_UNUSED_RESOURCES = "/tmp/FindUnusedResources/";
+    private static long mLastUpdateMs;  //每隔400ms更新下状态
+    private static String mRootPath;//src文件夹路径
+    //endregion
 
     public static void main(String[] args) {
+        mStringMap.clear();
+        mDimenMap.clear();
+        mColorMap.clear();
+        mStringArrayMap.clear();
+        mDrawableMap.clear();
+        mLayoutMap.clear();
+        mStylesMap.clear();
+        deletedFileList.clear();
+        mTotalRemovedMap.clear();
 //        args = new String[1];
 //        args[0] = "/Users/admin/StudioProjects/AndroidScreenRecorder/MainModule/src/main";
         if (args.length == 0) {
@@ -62,9 +71,9 @@ public class FindUnusedResources {
             System.exit(0);
         }
 
-        String root = args[0];
+        String root = args[0];  //main文件夹路径
 
-        // make sure AndroidManifest.xml at root
+        // make sure AndroidManifest.xml at root //todo 这里修改为参数
         File mainFile = new File(root + "/AndroidManifest.xml");
         if (!mainFile.exists()) {
             System.out.println("file: " + mainFile + " does not exist!\nBase directory should point to an Android project.");
@@ -78,9 +87,9 @@ public class FindUnusedResources {
         List<String> additionalSearchPaths = new ArrayList<>();
         boolean promptUser = true;
         // check for "noprompt" as an argument
-        for (int i = 1; args.length > i; i++) {
+        for (int i = 1; i < args.length; i++) {
             String arg = args[i];
-            if (arg.equalsIgnoreCase("noprompt")) {
+            if ("noprompt".equalsIgnoreCase(arg)) {
                 promptUser = false;
             } else {
                 additionalSearchPaths.add(arg);
@@ -106,11 +115,12 @@ public class FindUnusedResources {
         // - the first pass will delete the layout and the second pass will delete the drawable
         int totalRemoved = 0;
         for (int i = 1; true; i++) {
-            System.out.print("\nPASS " + i);
+            System.out.println("\nPASS " + i);
 
             // search root directory for resource usage
             int unused = findUnusedResources(root);
             if (unused == 0) {
+                System.out.println("findUnusedResources 0,break down");
                 break;
             }
 
@@ -118,6 +128,7 @@ public class FindUnusedResources {
             for (String additionalPath : additionalSearchPaths) {
                 unused = findUnusedResources(additionalPath);
                 if (unused == 0) {
+                    System.out.println("findUnusedResources additional 0,break down");
                     break;
                 }
             }
@@ -178,186 +189,8 @@ public class FindUnusedResources {
         }
     }
 
-    private static void indexAllResources(File parentFile, boolean isDeleteMode) {
-        for (File file : parentFile.listFiles()) {
-            if (file.isDirectory()) {
-                String fileName = file.getName();
-                if (fileName.equalsIgnoreCase("build")) {
-                    // ignore build folder
-                    continue;
-                } else if (fileName.equals("res")) {
-                    if (!isDeleteMode) {
-                        System.out.println(" > " + file.getAbsolutePath());
-                    }
-                    // index contents of all .xml files in values*/ directory
-                    indexValues(file, isDeleteMode);
-                    // index all filenames in every /res/drawable*/ directory
-                    indexDrawables(file, isDeleteMode);
-                    // index all filenames in every /res/layout*/ directory
-                    indexLayout(file, isDeleteMode);
-                } else {
-                    // recurse into sub-directory
-                    indexAllResources(file, isDeleteMode);
-                }
-            }
-        }
-    }
 
-    private static void printUsage() {
-        System.out.println("Program to find and remove unused resources");
-        System.out.println("usage: FindUnusedResources <path>");
-        System.out.println("- where <path> is the path to an Android project (where AndroidManifest.xml exists)");
-        System.out.println();
-        System.out.println("- optionally, if project is a LIBRARY module you can pass additional paths to search for uses of it's resources");
-        System.out.println("- optionally, add \"noprompt\" after <path> to remove unused w/out prompting");
-        System.out.println("eg: java FindUnusedResources ~/working/AndroidProject/src/main");
-        System.out.println("eg: java FindUnusedResources ~/working/AndroidProject/src/main noprompt");
-    }
-
-    private static int promptNext() {
-        System.out.println();
-        System.out.println("Select Option:");
-        System.out.println(ACTION_PRINT_UNUSED + ") show UNUSED resources");
-        System.out.println(ACTION_DELETE + ") DELETE unused resources");
-        System.out.println(ACTION_PRINT_ALL + ") show ALL indexed resources & usage counts");
-        System.out.println(ACTION_EXIT + ") exit");
-
-        BufferedReader br = null;
-        String choice = null;
-        try {
-            //  open up standard input
-            br = new BufferedReader(new InputStreamReader(System.in));
-            choice = br.readLine();
-
-            return Integer.parseInt(choice);
-        } catch (IOException ioe) {
-            System.out.println("> IOException: " + choice);
-            ioe.printStackTrace();
-        } catch (NumberFormatException nfe) {
-            System.out.println("> invalid choice: " + choice);
-        }
-        return 0;
-    }
-
-    /**
-     * @param root - directory to search through
-     * @return number of unused resources still remaining (targets to delete)
-     */
-    private static int findUnusedResources(String root) {
-        // search through AndroidManifext.xml
-        searchFileForUse(new File(root + "/AndroidManifest.xml"));
-
-        // search through all JAVA and XML files at <root>/../
-        searchDirForUse(new File(root + "/../"));
-
-        // done searching
-        System.out.println();
-
-        // print out summary for this pass1
-        return printResources(true, true);
-    }
-
-    private static int deleteUnusedResources(String root, int i) {
-        // first time through remove backup folder
-        if (i == 1) {
-            // TODO: use this to support windows better
-            //String tmpFolder = System.getProperty("java.io.tmpdir");
-            File backupFolder = new File(TMP_FIND_UNUSED_RESOURCES);
-            if (backupFolder.exists()) {
-                // delete tmp folder and all of it's contents
-                System.out.println("Deleting backup folder: " + TMP_FIND_UNUSED_RESOURCES);
-                final File[] files = backupFolder.listFiles();
-                for (File f : files) f.delete();
-                backupFolder.delete();
-            }
-        }
-
-        // find any directories named "res" and DELETE all unused resources inside
-        File parentFile = new File(root).getParentFile();
-        System.out.println("Deleting resources...");
-        indexAllResources(parentFile, true);
-
-        // pring and clear deleted resources from maps for next time through
-        int totalRemoved = 0;
-        totalRemoved += resetCounters(mStringMap, USE_STRING);
-        totalRemoved += resetCounters(mDimenMap, USE_DIMEN);
-        totalRemoved += resetCounters(mColorMap, USE_COLOR);
-        totalRemoved += resetCounters(mStringArrayMap, USE_STRING_ARRAY);
-        totalRemoved += resetCounters(mStylesMap, USE_STYLES);
-        totalRemoved += resetCounters(mLayoutMap, USE_LAYOUT);
-        totalRemoved += resetCounters(mDrawableMap, USE_DRAWABLE);
-
-        return totalRemoved;
-    }
-
-    private static void indexValues(File dir, boolean isDeleteMode) {
-        File[] fileArr = dir.listFiles();
-        for (File file : fileArr) {
-            String filename = file.getName();
-            if (file.isDirectory() && filename.startsWith("values")) {
-                indexValues(file, isDeleteMode);
-            } else if (filename.endsWith(".xml") && !isExcludedFile(filename)) {
-                if (isDeleteMode) {
-                    replaceFileContents(file);
-                } else {
-                    readFileContents(file);
-                }
-            }
-        }
-    }
-
-    private static void indexDrawables(File dir, boolean isDeleteMode) {
-        File[] fileArr = dir.listFiles();
-        for (File file : fileArr) {
-            String filename = file.getName();
-            if (file.isDirectory() && filename.startsWith("drawable")) {
-                indexDrawables(file, isDeleteMode);
-            }
-            // NOTE: drawables can be png files or xml files:
-            // ie: background=@drawable/selector.xml
-            else if (!file.isDirectory() && (filename.endsWith(".png") || filename.endsWith(".xml") && !isExcludedFile(filename))) {
-                filename = filename.substring(0, filename.length() - 4);
-                if (filename.endsWith(".9")) {
-                    filename = filename.substring(0, filename.length() - ACTION_DELETE);
-                }
-
-                if (isDeleteMode) {
-                    AtomicInteger count = mDrawableMap.get(filename);
-                    if (count != null && count.get() == 0) {
-                        backupAndDeleteFile(file);
-                    }
-                } else {
-                    if (mDrawableMap.containsKey(filename) == false) {
-                        mDrawableMap.put(filename, new AtomicInteger());
-                    }
-                }
-            }
-        }
-    }
-
-    private static void indexLayout(File dir, boolean isDeleteMode) {
-        File[] fileArr = dir.listFiles();
-        for (File file : fileArr) {
-            String filename = file.getName();
-            if (file.isDirectory() && filename.startsWith("layout")) {
-                indexLayout(file, isDeleteMode);
-            } else if (!file.isDirectory() && filename.endsWith(".xml") && !isExcludedFile(filename)) {
-                filename = filename.substring(0, filename.length() - 4);
-
-                if (isDeleteMode) {
-                    AtomicInteger count = mLayoutMap.get(filename);
-                    if (count != null && count.get() == 0) {
-                        backupAndDeleteFile(file);
-                    }
-                } else {
-                    if (!mLayoutMap.containsKey(filename)) {
-                        mLayoutMap.put(filename, new AtomicInteger());
-                    }
-                }
-            }
-        }
-    }
-
+    //region ok
     private static void backupAndDeleteFile(File file) {
         // backup file to /tmp folder using the same folder structure to avoid name conflicts
         String fileNameFull = file.getAbsolutePath();
@@ -389,99 +222,47 @@ public class FindUnusedResources {
         deletedFileList.add(file.toString());
     }
 
-    private static boolean isExcludedFile(String filename) {
-        for (String exclude : EXCLUDE_FILES) {
-            if (filename.equals(exclude)) {
-                return true;
-            }
-        }
-        return false;
-    }
 
-    private static void searchDirForUse(File dir) {
-        // now, look through all .java and .xml files to find uses
-        File[] fileArr = dir.listFiles();
-        if (fileArr == null) {
-            //System.out.println("searchDirForUse: no files: " + dir);
-            return;
-        }
-        boolean isAnyMatch = false;
-        for (File file : fileArr) {
-            if (file.isDirectory()) {
-                searchDirForUse(file);
-            } else {
-                String filename = file.getName();
-                if (filename.endsWith(".xml") || filename.endsWith(".java") || filename.endsWith(".kt")) {
-                    // System.out.println("searching: " + file);
-                    boolean isMatch = searchFileForUse(file);
-                    if (isMatch) {
-                        isAnyMatch = true;
-                    }
-
-                    // print out some progress indicator
-                    long timeMs = System.currentTimeMillis();
-                    if (timeMs - mLastUpdateMs >= 400) {
-                        System.out.print(isAnyMatch ? "+" : ".");
-                        isAnyMatch = false;
-                        mLastUpdateMs = timeMs;
-                    }
+    /**
+     * main文件夹路径
+     *
+     * @param root
+     * @param i
+     * @return
+     */
+    private static int deleteUnusedResources(String root, int i) {
+        // first time through remove backup folder
+        if (i == 1) {
+            // TODO: use this to support windows better
+            //String tmpFolder = System.getProperty("java.io.tmpdir");
+            File backupFolder = new File(TMP_FIND_UNUSED_RESOURCES);
+            if (backupFolder.exists()) {
+                // delete tmp folder and all of it's contents
+                System.out.println("Deleting backup folder: " + TMP_FIND_UNUSED_RESOURCES);
+                final File[] files = backupFolder.listFiles();
+                for (File f : files) {
+                    f.delete();
                 }
-            }
-        }
-    }
-
-    private static int printResources(boolean showUnusedOnly, boolean showSummaryOnly) {
-        int total = 0;
-        total += printResources(mStringMap, USE_STRING, showUnusedOnly, showSummaryOnly);
-        total += printResources(mDimenMap, USE_DIMEN, showUnusedOnly, showSummaryOnly);
-        total += printResources(mColorMap, USE_COLOR, showUnusedOnly, showSummaryOnly);
-        total += printResources(mStringArrayMap, USE_STRING_ARRAY, showUnusedOnly, showSummaryOnly);
-        total += printResources(mStylesMap, USE_STYLES, showUnusedOnly, showSummaryOnly);
-        total += printResources(mLayoutMap, USE_LAYOUT, showUnusedOnly, showSummaryOnly);
-        total += printResources(mDrawableMap, USE_DRAWABLE, showUnusedOnly, showSummaryOnly);
-
-        return total;
-    }
-
-    private static int printResources(Map<String, AtomicInteger> map, String text, boolean showUnusedOnly, boolean showSummaryOnly) {
-        int count = 0;
-        StringBuffer unused = new StringBuffer();
-        Iterator<String> it = map.keySet().iterator();
-        while (it.hasNext()) {
-            String key = it.next();
-            AtomicInteger value = map.get(key);
-            if (value == null) {
-                continue;
-            }
-            if (showUnusedOnly && value.get() == 0) {
-                // UNUSED RESOURCE
-                count++;
-                if (!showSummaryOnly) {
-                    unused.append(key).append('\n');
-                }
-            } else if (!showUnusedOnly) {
-                count++;
-                if (!showSummaryOnly) {
-                    unused.append(key + ", " + value.get()).append('\n');
-                }
+                backupFolder.delete();
             }
         }
 
-        if (count > 0) {
-            if (showUnusedOnly) {
-                System.out.println("found " + count + " unused " + text + " resources");
-            } else {
-                System.out.println("showing " + count + " " + text + " resources:");
-                System.out.println("<resource>, <# of references>");
-                System.out.println("-----------------------------");
-            }
+        // find any directories named "res" and DELETE all unused resources inside
+        File parentFile = new File(root).getParentFile();
+        System.out.println("Deleting resources...");
+        indexAllResources(parentFile, true);
 
-            if (!showSummaryOnly) {
-                System.out.println(unused.toString());
-            }
-        }
+        // pring and clear deleted resources from maps for next time through
+        int totalRemoved = 0;
+        totalRemoved += resetCounters(mStringMap, USE_STRING);
+        totalRemoved += resetCounters(mDimenMap, USE_DIMEN);
+        totalRemoved += resetCounters(mColorMap, USE_COLOR);
+        totalRemoved += resetCounters(mStringArrayMap, USE_STRING_ARRAY);
+        totalRemoved += resetCounters(mStylesMap, USE_STYLES);
+        totalRemoved += resetCounters(mLayoutMap, USE_LAYOUT);
+        totalRemoved += resetCounters(mDrawableMap, USE_DRAWABLE);
 
-        return count;
+        return totalRemoved;
     }
 
     private static int resetCounters(Map<String, AtomicInteger> map, String text) {
@@ -505,83 +286,6 @@ public class FindUnusedResources {
         }
 
         return count;
-    }
-
-    private static void readFileContents(File file) {
-        BufferedReader br = null;
-        try {
-            br = new BufferedReader(new FileReader(file));
-            while (true) {
-                String line = br.readLine();
-                if (line == null) {
-                    break;
-                }
-
-                // each line in an xml file can contain at most 1 of the below
-                boolean isFound;
-                isFound = addLineEntry(line, mStringMap, createBeginTag(USE_STRING));
-                if (!isFound) {
-                    isFound = addLineEntry(line, mDimenMap, createBeginTag(USE_DIMEN));
-                }
-                if (!isFound) {
-                    isFound = addLineEntry(line, mColorMap, createBeginTag(USE_COLOR));
-                }
-                if (!isFound) {
-                    isFound = addLineEntry(line, mStringArrayMap, createBeginTag(USE_STRING_ARRAY));
-                }
-                if (!isFound) {
-                    isFound = addLineEntry(line, mStylesMap, createBeginTag(USE_STYLES));
-                }
-            }
-        } catch (Exception e) {
-            System.out.println("readFileContents: Error reading file: " + file + ", " + e.getMessage());
-            e.printStackTrace();
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                }
-            }
-        }
-    }
-
-    private static String createBeginTag(String tag) {
-        return "<" + tag + " name=\"";
-    }
-
-    private static boolean addLineEntry(String line, Map<String, AtomicInteger> map, String key) {
-        int pos = line.indexOf(key);
-        if (pos >= 0) {
-            String value = line.substring(pos + key.length());
-            int p2 = value.indexOf("\"");
-            if (p2 > 0) {
-                value = value.substring(0, p2);
-                if (map.containsKey(value) == false) {
-                    map.put(value, new AtomicInteger(0));
-                    //System.out.println("adding: " + key + value + "\"");
-                }
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * check if given key is in the line AND that the value associated is UNUSED
-     */
-    private static boolean checkLineEntry(String line, Map<String, AtomicInteger> map, String key) {
-        int pos = line.indexOf(key);
-        if (pos >= 0) {
-            String value = line.substring(pos + key.length());
-            int p2 = value.indexOf("\"");
-            if (p2 > 0) {
-                value = value.substring(0, p2);
-                AtomicInteger count = map.get(value);
-                return (count != null && count.get() == 0);
-            }
-        }
-        return false;
     }
 
     private static boolean searchFileForUse(File file) {
@@ -611,7 +315,7 @@ public class FindUnusedResources {
                 boolean isMatch;
                 isMatch = searchLineForUse(isJava, line, mStringMap, USE_STRING);
                 if (!isMatch) {
-                    searchLineForUse(isJava, line, mDimenMap, USE_DIMEN);
+                    searchLineForUse(isJava, line, mDimenMap, USE_DIMEN);//todo？为啥没有isMatch
                 }
                 if (!isMatch) {
                     isMatch = searchLineForUse(isJava, line, mColorMap, USE_COLOR);
@@ -649,7 +353,7 @@ public class FindUnusedResources {
 
     private static boolean searchLineForUse(boolean isJava, String line, Map<String, AtomicInteger> map, String type) {
         String searchFor; // primary use case (ie: R.string.value)
-        String searchFor2 = null; // secondary use case (ie: R.id.value)
+        String searchFor2 = null; // secondary use case (ie: R.id.value)，//todo 这里有问题
 
         boolean isFound = false;
 
@@ -720,12 +424,15 @@ public class FindUnusedResources {
             }
 
             isFound = true;
+            System.out.println("searchFor isFound true " + searchFor);
 
             if (pos + searchFor.length() < line.length()) {
                 // need to check next character. can be letter/digit/_/. which means we didn't find this key
                 char nextChar = line.charAt(pos + searchFor.length());
+                System.out.println("searchFor isFound true,next char is " + nextChar);
                 if (nextChar == '_' || nextChar == '.' || Character.isLetterOrDigit(nextChar)) {
                     // false positive.. keep searching rest of line
+                    System.out.println("searchFor isFound true,but next chat not fit,so set false");
                     isFound = false;
 
                     // special case: <searchFor> can be found later on in the same line. check 1 more time..
@@ -740,6 +447,362 @@ public class FindUnusedResources {
         }
 
         return isFound;
+    }
+
+    /**
+     * main文件夹路径
+     *
+     * @param root - directory to search through
+     * @return number of unused resources still remaining (targets to delete)
+     */
+    private static int findUnusedResources(String root) {
+        // search through AndroidManifext.xml
+        searchFileForUse(new File(root + "/AndroidManifest.xml"));
+
+        // search through all JAVA and XML files at <root>/../
+        searchDirForUse(new File(root + "/../"));
+
+        // done searching
+        System.out.println();
+
+        // print out summary for this pass1
+        return printResources(true, false);
+    }
+
+    private static int promptNext() {
+        System.out.println();
+        System.out.println("Select Option:");
+        System.out.println(ACTION_PRINT_UNUSED + ") show UNUSED resources");
+        System.out.println(ACTION_DELETE + ") DELETE unused resources");
+        System.out.println(ACTION_PRINT_ALL + ") show ALL indexed resources & usage counts");
+        System.out.println(ACTION_EXIT + ") exit");
+
+        BufferedReader br = null;
+        String choice = null;
+        try {
+            //  open up standard input
+            br = new BufferedReader(new InputStreamReader(System.in));
+            choice = br.readLine();
+
+            return Integer.parseInt(choice);
+        } catch (IOException ioe) {
+            System.out.println("> IOException: " + choice);
+            ioe.printStackTrace();
+        } catch (NumberFormatException nfe) {
+            System.out.println("> invalid choice: " + choice);
+        }
+        return 0;
+    }
+
+    private static void searchDirForUse(File dir) {
+        // now, look through all .java and .xml files to find uses
+        File[] fileArr = dir.listFiles();
+        if (fileArr == null) {
+            //System.out.println("searchDirForUse: no files: " + dir);
+            return;
+        }
+        boolean isAnyMatch = false;
+        for (File file : fileArr) {
+            if (file.isDirectory()) {
+                searchDirForUse(file);
+            } else {
+                String filename = file.getName();
+                if (filename.endsWith(".xml") || filename.endsWith(".java") || filename.endsWith(".kt")) {
+                    // System.out.println("searching: " + file);
+                    boolean isMatch = searchFileForUse(file);
+                    if (isMatch) {
+                        isAnyMatch = true;
+                    }
+
+                    // print out some progress indicator
+                    long timeMs = System.currentTimeMillis();
+                    if (timeMs - mLastUpdateMs >= 400) {
+                        System.out.print(isAnyMatch ? "+" : ".");
+                        isAnyMatch = false;
+                        mLastUpdateMs = timeMs;
+                    }
+                }
+            }
+        }
+    }
+
+
+    /*
+     * ok
+     * main文件夹下的res路径遍历，获得初始文件个数
+     */
+    private static void indexAllResources(File parentFile, boolean isDeleteMode) {
+        for (File file : parentFile.listFiles()) {
+            if (file.isDirectory()) {
+                String fileName = file.getName();
+                if ("build".equalsIgnoreCase(fileName)) {
+                    // ignore build folder
+                    continue;
+                } else if ("res".equals(fileName)) {
+                    if (!isDeleteMode) {
+                        System.out.println(" > " + file.getAbsolutePath());
+                    }
+                    // index contents of all .xml files in values*/ directory
+                    indexValues(file, isDeleteMode);
+                    // index all filenames in every /res/drawable*/ directory
+                    indexDrawables(file, isDeleteMode);
+                    // index all filenames in every /res/layout*/ directory
+                    indexLayout(file, isDeleteMode);
+                } else {//src
+                    // recurse into sub-directory
+                    indexAllResources(file, isDeleteMode);
+                }
+            }
+        }
+    }
+
+
+    private static void indexValues(File dir, boolean isDeleteMode) {
+        File[] fileArr = dir.listFiles();
+        for (File file : fileArr) {
+            String filename = file.getName();
+            if (file.isDirectory() && filename.startsWith("values")) {
+                indexValues(file, isDeleteMode);
+            } else if (filename.endsWith(".xml") && !isExcludedFile(filename)) {
+                if (isDeleteMode) {
+                    replaceFileContents(file);
+                } else {
+                    readFileContents(file);
+                }
+            }
+        }
+    }
+
+    /**
+     * @param dir
+     * @param isDeleteMode
+     */
+    private static void indexDrawables(File dir, boolean isDeleteMode) {
+        File[] fileArr = dir.listFiles();
+        for (File file : fileArr) {
+            String filename = file.getName();
+            if (file.isDirectory() && filename.startsWith("drawable")) {
+                indexDrawables(file, isDeleteMode);
+            }
+            // NOTE: drawables can be png files or xml files:
+            // ie: background=@drawable/selector.xml
+            else if (!file.isDirectory() && (filename.endsWith(".png") || filename.endsWith(".xml") && !isExcludedFile(filename))) {
+                filename = filename.substring(0, filename.length() - 4);
+                if (filename.endsWith(".9")) {
+                    filename = filename.substring(0, filename.length() - 2);
+                }
+
+                if (isDeleteMode) {
+                    AtomicInteger count = mDrawableMap.get(filename);
+                    if (count != null && count.get() == 0) {
+                        backupAndDeleteFile(file);
+                    }
+                } else {
+                    if (mDrawableMap.containsKey(filename) == false) {
+                        mDrawableMap.put(filename, new AtomicInteger());
+                    }
+                }
+            }
+        }
+    }
+
+    private static void indexLayout(File dir, boolean isDeleteMode) {
+        File[] fileArr = dir.listFiles();
+        for (File file : fileArr) {
+            String filename = file.getName();
+            if (file.isDirectory() && filename.startsWith("layout")) {
+                indexLayout(file, isDeleteMode);
+            } else if (!file.isDirectory() && filename.endsWith(".xml") && !isExcludedFile(filename)) {
+                filename = filename.substring(0, filename.length() - 4);
+
+                if (isDeleteMode) {
+                    AtomicInteger count = mLayoutMap.get(filename);
+                    if (count != null && count.get() == 0) {
+                        backupAndDeleteFile(file);
+                    }
+                } else {
+                    if (!mLayoutMap.containsKey(filename)) {
+                        mLayoutMap.put(filename, new AtomicInteger());
+                    }
+                }
+            }
+        }
+    }
+
+    private static boolean isExcludedFile(String filename) {
+        for (String exclude : EXCLUDE_FILES) {
+            if (filename.equals(exclude)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void printUsage() {
+        System.out.println("Program to find and remove unused resources");
+        System.out.println("usage: FindUnusedResources <path>");
+        System.out.println("- where <path> is the path to an Android project (where AndroidManifest.xml exists)");
+        System.out.println();
+        System.out.println("- optionally, if project is a LIBRARY module you can pass additional paths to search for uses of it's resources");
+        System.out.println("- optionally, add \"noprompt\" after <path> to remove unused w/out prompting");
+        System.out.println("eg: java FindUnusedResources ~/working/AndroidProject/src/main");
+        System.out.println("eg: java FindUnusedResources ~/working/AndroidProject/src/main noprompt");
+    }
+
+    /**
+     * ok
+     * 资源id map填充数据
+     *
+     * @param file
+     */
+    private static void readFileContents(File file) {
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(new FileReader(file));
+            while (true) {
+                String line = br.readLine();
+                if (line == null) {
+                    break;
+                }
+
+                // each line in an xml file can contain at most 1 of the below
+                boolean isFound;
+                isFound = addLineEntry(line, mStringMap, createBeginTag(USE_STRING));
+                if (!isFound) {
+                    isFound = addLineEntry(line, mDimenMap, createBeginTag(USE_DIMEN));
+                }
+                if (!isFound) {
+                    isFound = addLineEntry(line, mColorMap, createBeginTag(USE_COLOR));
+                }
+                if (!isFound) {
+                    isFound = addLineEntry(line, mStringArrayMap, createBeginTag(USE_STRING_ARRAY));
+                }
+                if (!isFound) {
+                    isFound = addLineEntry(line, mStylesMap, createBeginTag(USE_STYLES));
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("readFileContents: Error reading file: " + file + ", " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+    }
+
+    /**
+     * ok
+     *
+     * @param tag 资源名
+     * @return
+     */
+    private static String createBeginTag(String tag) {
+        return "<" + tag + " name=\"";
+    }
+
+    /**
+     * ok
+     * 添加资源名到map里
+     *
+     * @param line
+     * @param map
+     * @param key
+     * @return
+     */
+    private static boolean addLineEntry(String line, Map<String, AtomicInteger> map, String key) {
+        int pos = line.indexOf(key);
+        if (pos >= 0) {
+            String value = line.substring(pos + key.length());
+            int p2 = value.indexOf("\"");
+            if (p2 > 0) {
+                value = value.substring(0, p2);
+                if (map.containsKey(value) == false) {
+                    map.put(value, new AtomicInteger(0));
+                    //System.out.println("adding: " + key + value + "\"");
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    private static int printResources(boolean showUnusedOnly, boolean showSummaryOnly) {
+        int total = 0;
+        total += printResources(mStringMap, USE_STRING, showUnusedOnly, showSummaryOnly);
+        total += printResources(mDimenMap, USE_DIMEN, showUnusedOnly, showSummaryOnly);
+        total += printResources(mColorMap, USE_COLOR, showUnusedOnly, showSummaryOnly);
+        total += printResources(mStringArrayMap, USE_STRING_ARRAY, showUnusedOnly, showSummaryOnly);
+        total += printResources(mStylesMap, USE_STYLES, showUnusedOnly, showSummaryOnly);
+        total += printResources(mLayoutMap, USE_LAYOUT, showUnusedOnly, showSummaryOnly);
+        total += printResources(mDrawableMap, USE_DRAWABLE, showUnusedOnly, showSummaryOnly);
+
+        return total;
+    }
+
+    private static int printResources(Map<String, AtomicInteger> map, String text, boolean showUnusedOnly, boolean showSummaryOnly) {
+        int count = 0;
+        StringBuffer unused = new StringBuffer();
+        Iterator<String> it = map.keySet().iterator();
+        while (it.hasNext()) {
+            String key = it.next();
+            AtomicInteger value = map.get(key);
+            if (value == null) {
+                continue;
+            }
+            if (showUnusedOnly && value.get() == 0) {
+                // UNUSED RESOURCE
+                count++;
+                if (!showSummaryOnly) {
+                    unused.append(key).append('\n');
+                }
+            } else if (!showUnusedOnly) {
+                count++;
+                if (!showSummaryOnly) {
+                    unused.append(key + ", " + value.get()).append('\n');
+                }
+            }
+        }
+
+        if (count > 0) {
+            if (showUnusedOnly) {
+                System.out.println("found " + count + " unused " + text + " resources");
+            } else {
+                System.out.println("showing " + count + " " + text + " resources:");
+                System.out.println("<resource>, <# of references>");
+                System.out.println("-----------------------------");
+            }
+
+            if (!showSummaryOnly) {
+                System.out.println(unused.toString());
+            }
+        }
+
+        return count;
+    }
+
+    //endregion
+
+    /**
+     * check if given key is in the line AND that the value associated is UNUSED
+     * todo 有没有可能有 R.string.abc  R.string.abcd
+     */
+    private static boolean checkLineEntry(String line, Map<String, AtomicInteger> map, String key) {
+        int pos = line.indexOf(key);
+        if (pos >= 0) {
+            String value = line.substring(pos + key.length());//从首字母开始
+            int p2 = value.indexOf("\"");
+            if (p2 > 0) {
+                value = value.substring(0, p2);
+                AtomicInteger count = map.get(value);
+                return (count != null && count.get() == 0);
+            }
+        }
+        return false;
     }
 
     private static void replaceFileContents(File file) {
@@ -837,6 +900,7 @@ public class FindUnusedResources {
                     bw.close();
                 }
             } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
