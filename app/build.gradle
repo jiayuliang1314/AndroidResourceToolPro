@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 apply plugin: 'plugin.resTools'  // 资源重命名插件
 
-apply plugin: 'find.unusedresources'  // 资源重命名插件
+//apply plugin: 'find.unusedresources'  // 资源重命名插件
 
 // 配置插件dsl
 resConfig {
