@@ -19,7 +19,7 @@ sourceSets {
     main.java.srcDirs += 'src/main/groovy'
 }
 
-apply from: "${rootDir}/push-maven.gradle"
+//apply from: "${rootDir}/push-maven.gradle"
 
 // ====== to jcenter
 // gradlew clean build generatePomFileForMavenPublication bintrayUpload -PbintrayUser=andypetermark -PbintrayKey=ea3160fbe823a8dd7cf663dff4b0dc3793a9311b -PdryRun=false
