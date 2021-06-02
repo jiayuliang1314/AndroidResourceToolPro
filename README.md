@@ -1,11 +1,11 @@
+# 重命名lib资源名称+无用资源删除插件
+
 参考开源项目：
 https://github.com/zhaoyubetter/AndroidResourceTools
-
+https://github.com/jpage4500/FindUnusedResources
 解决其问题：
 1.不支持最新gradle版本
 2.中文编码问题
-
-
 
 
 # AndroidResourceTools
@@ -22,11 +22,17 @@ https://github.com/zhaoyubetter/AndroidResourceTools
 # 使用说明
 
 1. 在项目的根目录`build.gradle`,添加依赖如下
+```
+    repositories {
+	    ...
+        mavenCentral()
+    }
+```
 
 ```java
 dependencies {
 	...
-	classpath 'com.jyl.better.restools:ResTools:1.0.1'
+    classpath 'io.github.jiayuliang1314:ResTools:1.0.0'
 }
 ```
 
@@ -87,3 +93,20 @@ resConfig {
 3. style有待支持；
 4. 其他资源类型有待支持；
 5. 如果资源名称与Android自带资源名重复时，会发生替换问题，此问题，有待修正；
+
+
+# 无用资源删除插件
+## 1.索引资源的id名
+
+private static final Map<String, AtomicInteger> mStringMap = new TreeMap<>();
+private static final Map<String, AtomicInteger> mDimenMap = new TreeMap<>();
+private static final Map<String, AtomicInteger> mColorMap = new TreeMap<>();
+private static final Map<String, AtomicInteger> mStringArrayMap = new TreeMap<>();
+private static final Map<String, AtomicInteger> mDrawableMap = new TreeMap<>();
+private static final Map<String, AtomicInteger> mLayoutMap = new TreeMap<>();
+private static final Map<String, AtomicInteger> mStylesMap = new TreeMap<>();
+## 2.遍历文件和AndroidManifest.xml，计算资源使用次数
+
+## 3.删除无用资源
+
+重复上述步骤多次

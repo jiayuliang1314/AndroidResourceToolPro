@@ -5,6 +5,7 @@ buildscript {
     repositories {
         google()
         jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.1.3'
@@ -14,6 +15,8 @@ buildscript {
         // in the individual module build.gradle files
 //        classpath 'com.jyl.better.restools:ResTools:1.0.6'
 //        classpath 'com.jyl.better.restools:findunusedresources:1.1.1'
+        // https://mvnrepository.com/artifact/io.github.jiayuliang1314/ResTools
+        classpath 'io.github.jiayuliang1314:ResTools:1.0.0'
         classpath 'com.novoda:bintray-release:0.8.0'//添加
 
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
@@ -24,6 +27,7 @@ allprojects {
     repositories {
         google()
         jcenter()
+        mavenCentral()
     }
 
     tasks.withType(Javadoc) {
