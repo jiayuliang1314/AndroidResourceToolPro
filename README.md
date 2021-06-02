@@ -113,8 +113,11 @@ private static final Map<String, AtomicInteger> mStylesMap = new TreeMap<>();
 
 ## 3.删除无用资源
 
+## 4.重复上述步骤多次
+
 # TODO
+
 1.索引的类型
+
 2.现在是单个lib，整个项目待支持
 
-重复上述步骤多次
