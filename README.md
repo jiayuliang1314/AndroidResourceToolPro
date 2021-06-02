@@ -1,8 +1,11 @@
 # 重命名lib资源名称+无用资源删除插件
 
 参考开源项目：
+
 https://github.com/zhaoyubetter/AndroidResourceTools
+
 https://github.com/jpage4500/FindUnusedResources
+
 解决其问题：
 1.不支持最新gradle版本
 2.中文编码问题
@@ -97,7 +100,7 @@ resConfig {
 
 # 无用资源删除插件
 ## 1.索引资源的id名
-
+```
 private static final Map<String, AtomicInteger> mStringMap = new TreeMap<>();
 private static final Map<String, AtomicInteger> mDimenMap = new TreeMap<>();
 private static final Map<String, AtomicInteger> mColorMap = new TreeMap<>();
@@ -105,8 +108,13 @@ private static final Map<String, AtomicInteger> mStringArrayMap = new TreeMap<>(
 private static final Map<String, AtomicInteger> mDrawableMap = new TreeMap<>();
 private static final Map<String, AtomicInteger> mLayoutMap = new TreeMap<>();
 private static final Map<String, AtomicInteger> mStylesMap = new TreeMap<>();
+```
 ## 2.遍历文件和AndroidManifest.xml，计算资源使用次数
 
 ## 3.删除无用资源
+
+# TODO
+1.索引的类型
+2.现在是单个lib，整个项目待支持
 
 重复上述步骤多次
