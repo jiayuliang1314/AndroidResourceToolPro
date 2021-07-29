@@ -586,7 +586,13 @@ public class FindUnusedResources {
             }
             // NOTE: drawables can be png files or xml files:
             // ie: background=@drawable/selector.xml
-            else if (!file.isDirectory() && (filename.endsWith(".png") || filename.endsWith(".xml") && !isExcludedFile(filename))) {
+            else if (!file.isDirectory() && (
+                    filename.endsWith(".png")
+                            || filename.endsWith(".jpg")
+                            || filename.endsWith(".jpeg")
+                            || filename.endsWith(".webp")
+                            || filename.endsWith(".xml") && !isExcludedFile(filename))
+            ) {
                 filename = filename.substring(0, filename.length() - 4);
                 if (filename.endsWith(".9")) {
                     filename = filename.substring(0, filename.length() - 2);
