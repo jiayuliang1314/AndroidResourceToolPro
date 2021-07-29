@@ -35,7 +35,7 @@ https://github.com/jpage4500/FindUnusedResources
 ```java
 dependencies {
 	...
-    classpath 'io.github.jiayuliang1314:ResTools:1.0.0'
+    classpath 'io.github.jiayuliang1314:ResTools:1.0.2'
 }
 ```
 
