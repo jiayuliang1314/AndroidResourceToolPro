@@ -553,6 +553,8 @@ public class FindUnusedResources {
                     indexValues(file, isDeleteMode);
                     // index all filenames in every /res/drawable*/ directory
                     indexDrawables(file, isDeleteMode);
+
+                    indexMipmaps(file, isDeleteMode);
                     // index all filenames in every /res/layout*/ directory
                     indexLayout(file, isDeleteMode);
                 } else {//src
@@ -618,6 +620,42 @@ public class FindUnusedResources {
             }
         }
     }
+
+    private static void indexMipmaps(File dir, boolean isDeleteMode) {
+        File[] fileArr = dir.listFiles();
+        for (File file : fileArr) {
+            String filename = file.getName();
+            if (file.isDirectory() && filename.startsWith("mipmap")) {
+                indexMipmaps(file, isDeleteMode);
+            }
+            // NOTE: drawables can be png files or xml files:
+            // ie: background=@drawable/selector.xml
+            else if (!file.isDirectory() && (
+                    filename.endsWith(".png")
+                            || filename.endsWith(".jpg")
+                            || filename.endsWith(".jpeg")
+                            || filename.endsWith(".webp")
+                            || filename.endsWith(".xml") && !isExcludedFile(filename))
+            ) {
+                filename = filename.substring(0, filename.length() - 4);
+                if (filename.endsWith(".9")) {
+                    filename = filename.substring(0, filename.length() - 2);
+                }
+
+                if (isDeleteMode) {
+                    AtomicInteger count = mMipmapMap.get(filename);
+                    if (count != null && count.get() == 0) {
+                        backupAndDeleteFile(file);
+                    }
+                } else {
+                    if (mMipmapMap.containsKey(filename) == false) {
+                        mMipmapMap.put(filename, new AtomicInteger());
+                    }
+                }
+            }
+        }
+    }
+
 
     private static void indexLayout(File dir, boolean isDeleteMode) {
         File[] fileArr = dir.listFiles();
