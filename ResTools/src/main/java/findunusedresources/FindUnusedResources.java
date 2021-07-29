@@ -35,6 +35,7 @@ public class FindUnusedResources {
     private static final Map<String, AtomicInteger> mColorMap = new TreeMap<>();
     private static final Map<String, AtomicInteger> mStringArrayMap = new TreeMap<>();
     private static final Map<String, AtomicInteger> mDrawableMap = new TreeMap<>();
+    private static final Map<String, AtomicInteger> mMipmapMap = new TreeMap<>();
     private static final Map<String, AtomicInteger> mLayoutMap = new TreeMap<>();
     private static final Map<String, AtomicInteger> mStylesMap = new TreeMap<>();
     private static final List<String> deletedFileList = new ArrayList<>();
@@ -45,6 +46,7 @@ public class FindUnusedResources {
     private static final String USE_STRING_ARRAY = "string-array";
     private static final String USE_STRING_ARRAY_REFERENCE = "array"; // string-array referenced as R.array.xxx
     private static final String USE_DRAWABLE = "drawable";
+    private static final String USE_MIPMAP = "mipmap";
     private static final String USE_LAYOUT = "layout";
     private static final String USE_STYLES = "style";
     private static final String[] EXCLUDE_FILES = {"analytics.xml"};
@@ -109,6 +111,7 @@ public class FindUnusedResources {
         System.out.println("got " + mStylesMap.size() + " " + USE_STYLES + " resources");
         System.out.println("got " + mLayoutMap.size() + " " + USE_LAYOUT + " resources");
         System.out.println("got " + mDrawableMap.size() + " " + USE_DRAWABLE + " resources");
+        System.out.println("got " + mMipmapMap.size() + " " + USE_MIPMAP + " resources");
 
         // may need to loop a few times to find & delete all unused variables
         // for example, a drawable 'abc' may be referenced by a layout which isn't referenced in any code.
@@ -261,6 +264,7 @@ public class FindUnusedResources {
         totalRemoved += resetCounters(mStylesMap, USE_STYLES);
         totalRemoved += resetCounters(mLayoutMap, USE_LAYOUT);
         totalRemoved += resetCounters(mDrawableMap, USE_DRAWABLE);
+        totalRemoved += resetCounters(mMipmapMap, USE_MIPMAP);
 
         return totalRemoved;
     }
@@ -325,6 +329,9 @@ public class FindUnusedResources {
                 }
                 if (!isMatch) {
                     isMatch = searchLineForUse(isJava, line, mDrawableMap, USE_DRAWABLE);
+                }
+                if (!isMatch) {
+                    isMatch = searchLineForUse(isJava, line, mMipmapMap, USE_MIPMAP);
                 }
                 if (!isMatch) {
                     isMatch = searchLineForUse(isJava, line, mStylesMap, USE_STYLES);
@@ -746,6 +753,7 @@ public class FindUnusedResources {
         total += printResources(mStylesMap, USE_STYLES, showUnusedOnly, showSummaryOnly);
         total += printResources(mLayoutMap, USE_LAYOUT, showUnusedOnly, showSummaryOnly);
         total += printResources(mDrawableMap, USE_DRAWABLE, showUnusedOnly, showSummaryOnly);
+        total += printResources(mMipmapMap, USE_MIPMAP, showUnusedOnly, showSummaryOnly);
 
         return total;
     }
